@@ -63,3 +63,33 @@ python batch_analyze_dataset.py --dataset dataset --pairs frame_pairs.csv --out 
 ```
 
 每个样本都会生成自己的热力图、区域明细和数值报告，最终总表为 `outputs\批量视频帧测试\批量汇总.csv`。
+
+## 用 HM 构建视频测试数据集
+
+1. 把原始视频放入 `dataset/raw_videos/`。
+2. 准备 HM 的 `TAppEncoderStatic.exe` 和配置文件，例如 `encoder_randomaccess_main.cfg`。
+3. 先生成 HM 输入 YUV、HM 命令和原始帧：
+
+```powershell
+python prepare_hm_dataset.py --dataset dataset --hm "D:\HM\bin\TAppEncoderStatic.exe" --hm-config "D:\HM\cfg\encoder_randomaccess_main.cfg" --qps 22,27,32,37,42 --frames 120 --frame-step 15
+```
+
+如果想让脚本直接调用 HM 编码，加上 `--run-hm`：
+
+```powershell
+python prepare_hm_dataset.py --dataset dataset --hm "D:\HM\bin\TAppEncoderStatic.exe" --hm-config "D:\HM\cfg\encoder_randomaccess_main.cfg" --qps 22,32,42 --frames 120 --frame-step 15 --run-hm
+```
+
+脚本会生成/更新：
+
+```text
+dataset/hm_results/input_yuv/      HM 输入 YUV
+dataset/hm_results/bitstreams/     HM 码流
+dataset/hm_results/recon_yuv/      HM 重建 YUV
+dataset/hm_results/logs/           HM 日志
+dataset/frame_pairs/               原始帧和压缩帧
+dataset/metadata.csv               视频级元数据
+dataset/frame_pairs.csv            帧级配对清单
+```
+
+如果暂时不加 `--run-hm`，HM 命令会写到 `dataset/hm_results/hm_commands.txt`，可以手动复制运行。等重建 YUV 生成后，再运行一次同样命令，脚本会抽取压缩帧并填充 `frame_pairs.csv`。
