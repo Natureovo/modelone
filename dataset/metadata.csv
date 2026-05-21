@@ -1,0 +1,2 @@
+video_id,category,width,height,fps,frame_count,format,hm_qp,raw_video_path,hm_bitstream_path,hm_recon_yuv_path,hm_log_path,notes
+示例视频001,natural_texture,1920,1080,30,300,yuv420p,32,raw_videos/示例视频001.yuv,hm_results/bitstreams/示例视频001_QP32.bin,hm_results/recon_yuv/示例视频001_QP32_rec.yuv,hm_results/logs/示例视频001_QP32.log,这里填写视频内容说明

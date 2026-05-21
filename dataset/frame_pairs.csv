@@ -1,0 +1,2 @@
+sample_id,video_id,frame_idx,category,hm_qp,ref_frame,compressed_frame
+示例视频001_QP32_000001,示例视频001,1,natural_texture,32,frame_pairs/示例视频001/原始帧/000001.png,frame_pairs/示例视频001/HM_QP32_压缩帧/000001.png
