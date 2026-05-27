@@ -9,7 +9,7 @@ from PIL import Image
 def load_rgb(path: Path, size: tuple[int, int] | None = None) -> np.ndarray:
     image = Image.open(path).convert("RGB")
     if size is not None and image.size != size:
-        image = image.resize(size, Image.Resampling.BICUBIC)
+        image = image.resize(size, getattr(Image, 'Resampling', Image).BICUBIC)
     return np.asarray(image, dtype=np.float32) / 255.0
 
 

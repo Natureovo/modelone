@@ -12,11 +12,26 @@ VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".y4m"}
 YUV_EXTS = {".yuv"}
 
 
+def as_dataset_path(path: Path, dataset: Path) -> str:
+    try:
+        return path.relative_to(dataset).as_posix()
+    except ValueError:
+        return str(path)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Prepare frame-pair dataset from raw videos and HM recon output.")
     parser.add_argument("--dataset", default="dataset", help="Dataset root.")
-    parser.add_argument("--hm", default=None, help="Path to HM TAppEncoderStatic.exe. If omitted, only commands are generated.")
-    parser.add_argument("--hm-config", default=None, help="Path to HM encoder config, e.g. encoder_randomaccess_main.cfg.")
+    parser.add_argument(
+        "--hm",
+        default="/home/cp/桌面/yx/HM/bin/umake/gcc-9.4/x86_64/release/TAppEncoder",
+        help="Path to HM TAppEncoderStatic executable. If omitted, only commands are generated.",
+    )
+    parser.add_argument(
+        "--hm-config",
+        default="/home/cp/桌面/yx/HM/cfg/encoder_randomaccess_main.cfg",
+        help="Path to HM encoder config, e.g. encoder_randomaccess_main.cfg.",
+    )
     parser.add_argument("--ffmpeg", default=None, help="Path to ffmpeg.exe. Defaults to PATH lookup.")
     parser.add_argument("--ffprobe", default=None, help="Path to ffprobe.exe. Defaults to PATH lookup.")
     parser.add_argument("--qps", default="22,27,32,37,42", help="Comma-separated QP list.")
@@ -69,35 +84,66 @@ def probe_video(path: Path, ffprobe: str) -> dict[str, float | int]:
 
 
 def convert_to_yuv(src: Path, dst: Path, ffmpeg: str, frames: int) -> None:
+
     dst.parent.mkdir(parents=True, exist_ok=True)
+
     cmd = [
+
         ffmpeg,
+
         "-y",
+
         "-i",
+
         str(src),
+
         "-frames:v",
+
         str(frames),
+
+        "-vf",
+
+        "scale=960:544",
+
         "-pix_fmt",
+
         "yuv420p",
+
         str(dst),
+
     ]
+
     run(cmd)
 
 
 def extract_from_video(src: Path, dst_dir: Path, ffmpeg: str, frame_step: int, frames: int) -> None:
+
     dst_dir.mkdir(parents=True, exist_ok=True)
+
     select_expr = f"select='lt(n,{frames})*not(mod(n,{frame_step}))'"
+
     cmd = [
+
         ffmpeg,
+
         "-y",
+
         "-i",
+
         str(src),
+
         "-vf",
-        select_expr,
+
+        f"scale=960:544,{select_expr}",
+
         "-vsync",
+
         "vfr",
+
         str(dst_dir / "%06d.png"),
+
     ]
+
     run(cmd)
 
 
@@ -212,7 +258,7 @@ def main() -> None:
             raw_extract_source = src
         else:
             info = probe_video(src, ffprobe)
-            width, height, fps = int(info["width"]), int(info["height"]), float(info["fps"])
+            width, height, fps = 960, 544, float(info["fps"])
             input_yuv = yuv_dir / f"{video_id}_{width}x{height}_{round(fps)}fps.yuv"
             convert_to_yuv(src, input_yuv, ffmpeg, args.frames)
             raw_extract_source = src
@@ -267,7 +313,7 @@ def main() -> None:
                     "frame_count": args.frames,
                     "format": "yuv420p",
                     "hm_qp": qp,
-                    "raw_video_path": src.relative_to(dataset).as_posix() if src.is_relative_to(dataset) else str(src),
+                    "raw_video_path": as_dataset_path(src, dataset),
                     "hm_bitstream_path": bitstream.relative_to(dataset).as_posix(),
                     "hm_recon_yuv_path": recon_yuv.relative_to(dataset).as_posix(),
                     "hm_log_path": log_path.relative_to(dataset).as_posix(),
